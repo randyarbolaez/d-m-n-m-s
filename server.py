@@ -15,8 +15,6 @@ class ChatServer:
         self.usernames_lookup = {}
 
         self.redis_url = os.getenv("REDIS_URL")
-        # self.r = redis.Redis.from_url(self.redis_url, 
-        # decode_responses=True)
         self.r = redis.Redis.from_url(self.redis_url)
 
         self.pubsub = self.r.pubsub()
@@ -48,7 +46,7 @@ class ChatServer:
                 continue
 
             existing_port = self.r.hget("usernames", name)
-            if existing_port is None or existing_port.decode() != self.port:
+            if existing_port is None or int(existing_port.decode()) != self.port:
                 self.addresses_lookup[address] = name
                 self.clients_lookup[address] = c
                 self.usernames_lookup[name] = address
@@ -60,7 +58,6 @@ class ChatServer:
                 else:
                     self.r.hset("ports", self.port, int(current_port) + 1)
 
-                # print(self.r.hgetall("usernames"))
                 if len(address) > 1:
                     self.send_message(address, " ".join(data).encode())
 
@@ -84,7 +81,6 @@ class ChatServer:
                 self.clients_lookup.pop(address)
 
                 current_port = self.r.hget("ports", self.port)
-                print("hello, get_message()")
 
                 if current_port is not None:
                     new_count = int(current_port) - 1
@@ -143,9 +139,7 @@ class ChatServer:
     def send_message(self, from_address, msg):
         username = self.addresses_lookup.get(from_address, "Unknown")
         msg_str = msg.decode() if isinstance(msg, bytes) else msg
-        print(msg_str)
         actual_message = f"{username}:{msg_str}"
-        print(actual_message)
         self.r.publish('global_chat', actual_message)
 
     def send_private_message(self, from_user, to_user, to_port, msg):
@@ -161,3 +155,7 @@ server = ChatServer(initial_port=sys.argv[1])
 server.start()
 
 ## todo - bug - there are 2 servers, and 2 clients, server 1 = client 1, server 2 = client 2. if server 1 disconnects then client 1 will connect to server 2, but client 1 will not receive any of the messages that client 2 sends BUT client 1 can recieve messages from client 2.
+
+## todo semaphore
+
+## todo threading lock
