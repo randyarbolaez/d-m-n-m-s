@@ -1,4 +1,4 @@
-# Distributed Multi-Node Messaging Project
+# Distributed Multi-Node Messaging System
 
 ## Tools used in this app
 > Python, Redis, TCP/IP
